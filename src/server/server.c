@@ -540,7 +540,7 @@ int server_preinit(void)
 	}
 
 	/* register ctrl-c handler */
-	SetConsoleCtrlHandler(ControlHandler, TRUE);
+	SetConsoleCtrlHandler(NULL, TRUE);
 
 	signal(SIGBREAK, sig_handler);
 #endif
@@ -567,7 +567,7 @@ int server_quit(void)
 
 #ifdef _WIN32
 	WSACleanup();
-	SetConsoleCtrlHandler(ControlHandler, FALSE);
+	SetConsoleCtrlHandler(NULL, FALSE);
 
 	return ERROR_OK;
 #endif
