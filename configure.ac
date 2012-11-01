@@ -308,6 +308,10 @@ AC_ARG_ENABLE([werror],
   AS_HELP_STRING([--disable-werror], [Do not treat warnings as errors]),
   [gcc_werror=$enableval], [gcc_werror=$gcc_warnings])
 
+AC_ARG_ENABLE([gbgcol],
+  AS_HELP_STRING([--disable-gbgcol], [Disable garbage collection of unused functions/variables]),
+  [gcc_gbgcol=$enableval], [gcc_gbgcol=yes])
+
 # set default verbose options, overridden by following options
 debug_jtag_io=no
 debug_usb_io=no
@@ -613,6 +617,8 @@ case $host in
       AC_MSG_WARN([--enable-parport-giveio cannot be used by Darwin hosts])
     fi
     parport_use_giveio=no
+
+	gcc_gbgcol=no
 
     AC_DEFINE([IS_CYGWIN], [0], [0 if not building for Cygwin.])
     AC_DEFINE([IS_WIN32], [0], [0 if not building for Win32.])
@@ -1281,6 +1287,12 @@ if test "${gcc_wextra}" = yes; then
 fi
 if test "${gcc_werror}" = yes; then
   GCC_WARNINGS="${GCC_WARNINGS} -Werror"
+fi
+
+# garbage collection flags
+if test "${gcc_gbgcol}" = yes; then
+  CFLAGS="$CFLAGS -ffunction-sections -fdata-sections"
+  LDFLAGS="$LDFLAGS -Wl,--gc-sections"
 fi
 
 # overide default gcc cflags
