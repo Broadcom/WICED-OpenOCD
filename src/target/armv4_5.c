@@ -1114,7 +1114,7 @@ int arm_get_gdb_reg_list(struct target *target,
 	unsigned int i;
 
 	if (!is_arm_mode(arm->core_mode)) {
-		LOG_ERROR("not a valid arm core mode - communication failure?");
+		LOG_ERROR("not a valid arm core mode (%d)- communication failure?",arm->core_mode);
 		return ERROR_FAIL;
 	}
 

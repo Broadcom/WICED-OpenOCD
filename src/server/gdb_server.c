@@ -475,6 +475,15 @@ int gdb_put_packet(struct connection *connection, char *buffer, int len)
 	int retval = gdb_put_packet_inner(connection, buffer, len);
 	gdb_con->busy = 0;
 
+    if (LOG_LEVEL_IS(LOG_LVL_DEBUG)) {
+        char * str = (char *) malloc(len+1);
+        strncpy(str, buffer, len);
+        str[len]='\x00';
+        LOG_DEBUG("sending packet: '%s'", str);
+        free(str);
+    }
+
+
 	/* we sent some data, reset timer for keep alive messages */
 	kept_alive();
 
