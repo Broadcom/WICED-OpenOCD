@@ -29,6 +29,11 @@ AM_PROG_CC_C_O
 AC_PROG_RANLIB
 PKG_PROG_PKG_CONFIG([0.23])
 
+dnl This is needed by MinGW for some reason
+m4_pattern_allow([^AC_MSG_NOTICE$])
+m4_pattern_allow([^AC_DEFINE$])
+m4_pattern_allow([^AC_MSG_WARN$])
+
 dnl disable checks for C++, Fortran and GNU Java Compiler
 m4_defun([_LT_AC_LANG_CXX_CONFIG], [:])
 m4_defun([_LT_AC_LANG_F77_CONFIG], [:])
