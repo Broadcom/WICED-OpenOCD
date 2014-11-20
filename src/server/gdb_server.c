@@ -2767,6 +2767,7 @@ static int gdb_input_inner(struct connection *connection)
 						 * register values without modifying the target state.
 						 *
 						 */
+						rtos_update_threads(target);
 						gdb_sig_halted(connection);
 
 						/* stop forwarding log packets! */
