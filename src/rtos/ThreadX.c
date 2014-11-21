@@ -42,6 +42,7 @@ static int ThreadX_create(struct target *target);
 static int ThreadX_update_threads(struct rtos *rtos);
 static int ThreadX_get_thread_reg_list(struct rtos *rtos, int64_t thread_id, char **hex_reg_list);
 static int ThreadX_get_symbol_list_to_lookup(symbol_table_elem_t *symbol_list[]);
+static int ThreadX_wipe(struct rtos *rtos);
 
 
 
@@ -204,7 +205,35 @@ const struct rtos_type ThreadX_rtos = {
 	.update_threads = ThreadX_update_threads,
 	.get_thread_reg_list = ThreadX_get_thread_reg_list,
 	.get_symbol_list_to_lookup = ThreadX_get_symbol_list_to_lookup,
+	.wipe = ThreadX_wipe,
 };
+
+static int ThreadX_wipe(struct rtos *rtos)
+{
+	int retval = ERROR_FAIL;
+	uint8_t zeros[4] = { 0, 0, 0, 0 };
+	symbol_table_elem_t *sym = rtos->symbols;
+	while (sym->symbol_name != NULL) {
+		if (sym->address == 0) {
+			if (sym->optional) {
+				LOG_DEBUG("No address available for variable %s - not wiping", sym->symbol_name);
+				sym++;
+				continue;
+			}
+			LOG_ERROR("Unable to wipe mandatory variable: %s - address unknown", sym->symbol_name);
+			return ERROR_FAIL;
+		}
+
+		retval = target_write_buffer(rtos->target, sym->address, 4, zeros);
+		if (retval != ERROR_OK) {
+			LOG_ERROR("Write failure during wipe of variable: %s at 0x%" PRIx64, sym->symbol_name, sym->address);
+			return retval;
+		}
+		LOG_DEBUG("Wiped rtos variable: %s at 0x%" PRIx64, sym->symbol_name, sym->address);
+		sym++;
+	}
+	return retval;
+}
 
 static const struct rtos_register_stacking *get_stacking_info(const struct rtos *rtos, int64_t stack_ptr)
 {

@@ -4369,6 +4369,7 @@ enum target_cfg_param {
 	TCFG_DBGBASE,
 	TCFG_RTOS,
 	TCFG_MEMORYMAP,
+	TCFG_RTOS_WIPE,
 };
 
 static Jim_Nvp nvp_config_opts[] = {
@@ -4383,6 +4384,7 @@ static Jim_Nvp nvp_config_opts[] = {
 	{ .name = "-chain-position",   .value = TCFG_CHAIN_POSITION },
 	{ .name = "-dbgbase",          .value = TCFG_DBGBASE },
 	{ .name = "-rtos",             .value = TCFG_RTOS },
+	{ .name = "-rtos-wipe",        .value = TCFG_RTOS_WIPE },
 	{ .name = "-memorymap",        .value = TCFG_MEMORYMAP },
 	{ .name = NULL, .value = -1 }
 };
@@ -4653,6 +4655,16 @@ no_params:
 			/* RTOS */
 			{
 				int result = rtos_create(goi, target);
+				if (result != JIM_OK)
+					return result;
+			}
+			/* loop for more */
+			break;
+
+		case TCFG_RTOS_WIPE:
+			/* RTOS wipe*/
+			{
+				int result = rtos_set_wipe(goi, target);
 				if (result != JIM_OK)
 					return result;
 			}
@@ -5489,6 +5501,7 @@ static int target_create(Jim_GetOptInfo *goi)
 
 	target->rtos = NULL;
 	target->rtos_auto_detect = false;
+	target->rtos_wipe = false;
 
 	/* Do the rest as "configure" options */
 	goi->isconfigure = 1;

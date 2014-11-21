@@ -4195,6 +4195,22 @@ If any memory map regions are specified, then memory reads & writes are limited 
 Currently this does @emph{not} yet use the "qXfer:memory-map:read" packet to inform GDB of the valid regions.
 
 
+@item @code{-rtos-wipe} -- wipe rtos variables before usage.
+OpenOCD reads global variables implemented by the RTOS - In some situations,
+these global variables may contain invalid data, which could cause RTOS
+awareness in OpenOCD to malfunction.
+The main situation where this can happen is starting debug and halting before
+the global variables are initialized (usually in crt0). This may happen due to
+a "reset halt" command. The RTOS global variables will contain either random
+data or data from the previous execution run.
+Enabling this flag causes the RTOS global variables to be wiped (to zero) at
+the first halt, hence avoiding issues with invalid data.
+There are situations where you may not want the flag set: If the first halt
+occurs after global variables are initialized.  E.g. You are connecting to a
+target that is already running, OR, if you are resetting but not halting
+immediately.
+@xref{gdbrtossupport,,RTOS Support}.
+
 @end itemize
 @end deffn
 

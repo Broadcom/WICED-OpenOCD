@@ -203,6 +203,8 @@ struct target {
 	struct rtos *rtos;					/* Instance of Real Time Operating System support */
 	bool rtos_auto_detect;				/* A flag that indicates that the RTOS has been specified as "auto"
 										 * and must be detected when symbols are offered */
+	bool rtos_wipe;						/* A flag that indicates that the RTOS variables should be
+										 * wiped before use to avoid old values retained in memory */
 	struct backoff_timer backoff;
 	int smp;							/* add some target attributes for smp support */
 	struct target_list *head;
