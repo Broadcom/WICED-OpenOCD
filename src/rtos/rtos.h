@@ -27,6 +27,12 @@
 typedef int64_t threadid_t;
 typedef int64_t symbol_address_t;
 
+
+#define RTOS_NO_CURRENT_THREAD  ((threadid_t) -1)
+
+#define REGISTER_NOT_STACKED      ((signed short) -1)
+#define REGISTER_IS_STACK_POINTER ((signed short) -2)
+
 struct reg;
 
 /**

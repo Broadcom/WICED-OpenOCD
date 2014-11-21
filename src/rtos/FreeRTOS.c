@@ -184,6 +184,7 @@ static int FreeRTOS_update_threads(struct rtos *rtos)
 	rtos_free_threadlist(rtos);
 
 	/* read the current thread */
+	rtos->current_thread = 0; /* Clear all 64 bits since read may not set them */
 	retval = target_read_buffer(rtos->target,
 			rtos->symbols[FreeRTOS_VAL_pxCurrentTCB].address,
 			param->pointer_width,
@@ -209,7 +210,8 @@ static int FreeRTOS_update_threads(struct rtos *rtos)
 			LOG_ERROR("Error allocating memory for %d threads", thread_list_size);
 			return ERROR_FAIL;
 		}
-		rtos->thread_details->threadid = 1;
+		rtos->current_thread = RTOS_NO_CURRENT_THREAD;
+		rtos->thread_details->threadid = RTOS_NO_CURRENT_THREAD;
 		rtos->thread_details->exists = true;
 		rtos->thread_details->display_str = NULL;
 		rtos->thread_details->extra_info_str = NULL;

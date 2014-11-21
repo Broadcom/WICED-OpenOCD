@@ -71,45 +71,45 @@ static const struct ThreadX_thread_state ThreadX_thread_states[] = {
 
 #define ARM926EJS_REGISTERS_SIZE_SOLICITED (11 * 4)
 static const struct stack_register_offset rtos_threadx_arm926ejs_stack_offsets_solicited[] = {
-	{ -1,   32 },		/* r0        */
-	{ -1,   32 },		/* r1        */
-	{ -1,   32 },		/* r2        */
-	{ -1,   32 },		/* r3        */
-	{ 0x08, 32 },		/* r4        */
-	{ 0x0C, 32 },		/* r5        */
-	{ 0x10, 32 },		/* r6        */
-	{ 0x14, 32 },		/* r7        */
-	{ 0x18, 32 },		/* r8        */
-	{ 0x1C, 32 },		/* r9        */
-	{ 0x20, 32 },		/* r10       */
-	{ 0x24, 32 },		/* r11       */
-	{ -1,   32 },		/* r12       */
-	{ -2,   32 },		/* sp (r13)  */
-	{ 0x28, 32 },		/* lr (r14)  */
-	{ -1,   32 },		/* pc (r15)  */
-	/*{ -1,   32 },*/		/* lr (r14)  */
-	/*{ 0x28, 32 },*/		/* pc (r15)  */
-	{ 0x04, 32 },		/* xPSR      */
+	{ REGISTER_NOT_STACKED,      32 },		/* r0        */
+	{ REGISTER_NOT_STACKED,      32 },		/* r1        */
+	{ REGISTER_NOT_STACKED,      32 },		/* r2        */
+	{ REGISTER_NOT_STACKED,      32 },		/* r3        */
+	{ 0x08,                      32 },		/* r4        */
+	{ 0x0C,                      32 },		/* r5        */
+	{ 0x10,                      32 },		/* r6        */
+	{ 0x14,                      32 },		/* r7        */
+	{ 0x18,                      32 },		/* r8        */
+	{ 0x1C,                      32 },		/* r9        */
+	{ 0x20,                      32 },		/* r10       */
+	{ 0x24,                      32 },		/* r11       */
+	{ REGISTER_NOT_STACKED,      32 },		/* r12       */
+	{ REGISTER_IS_STACK_POINTER, 32 },		/* sp (r13)  */
+	{ 0x28,                      32 },		/* lr (r14)  */
+	{ REGISTER_NOT_STACKED,      32 },		/* pc (r15)  */
+	/*{ REGISTER_NOT_STACKED,      32 },*/		/* lr (r14)  */
+	/*{ 0x28,                      32 },*/		/* pc (r15)  */
+	{ 0x04,                      32 },		/* xPSR      */
 };
 #define ARM926EJS_REGISTERS_SIZE_INTERRUPT (17 * 4)
 static const struct stack_register_offset rtos_threadx_arm926ejs_stack_offsets_interrupt[] = {
-	{ 0x08, 32 },		/* r0        */
-	{ 0x0C, 32 },		/* r1        */
-	{ 0x10, 32 },		/* r2        */
-	{ 0x14, 32 },		/* r3        */
-	{ 0x18, 32 },		/* r4        */
-	{ 0x1C, 32 },		/* r5        */
-	{ 0x20, 32 },		/* r6        */
-	{ 0x24, 32 },		/* r7        */
-	{ 0x28, 32 },		/* r8        */
-	{ 0x2C, 32 },		/* r9        */
-	{ 0x30, 32 },		/* r10       */
-	{ 0x34, 32 },		/* r11       */
-	{ 0x38, 32 },		/* r12       */
-	{ -2,   32 },		/* sp (r13)  */
-	{ 0x3C, 32 },		/* lr (r14)  */
-	{ 0x40, 32 },		/* pc (r15)  */
-	{ 0x04, 32 },		/* xPSR      */
+	{ 0x08,                      32 },		/* r0        */
+	{ 0x0C,                      32 },		/* r1        */
+	{ 0x10,                      32 },		/* r2        */
+	{ 0x14,                      32 },		/* r3        */
+	{ 0x18,                      32 },		/* r4        */
+	{ 0x1C,                      32 },		/* r5        */
+	{ 0x20,                      32 },		/* r6        */
+	{ 0x24,                      32 },		/* r7        */
+	{ 0x28,                      32 },		/* r8        */
+	{ 0x2C,                      32 },		/* r9        */
+	{ 0x30,                      32 },		/* r10       */
+	{ 0x34,                      32 },		/* r11       */
+	{ 0x38,                      32 },		/* r12       */
+	{ REGISTER_IS_STACK_POINTER, 32 },		/* sp (r13)  */
+	{ 0x3C,                      32 },		/* lr (r14)  */
+	{ 0x40,                      32 },		/* pc (r15)  */
+	{ 0x04,                      32 },		/* xPSR      */
 };
 
 const struct rtos_register_stacking rtos_threadx_arm926ejs_stacking[] = {
@@ -300,6 +300,7 @@ static int ThreadX_update_threads(struct rtos *rtos)
 	rtos_free_threadlist(rtos);
 
 	/* read the current thread id */
+	rtos->current_thread = 0; /* Clear all 64 bits since read does not set them */
 	retval = target_read_buffer(rtos->target,
 			rtos->symbols[ThreadX_VAL_tx_thread_current_ptr].address,
 			4,
@@ -319,14 +320,15 @@ static int ThreadX_update_threads(struct rtos *rtos)
 		tasks_found++;
 		rtos->thread_details = malloc(
 				sizeof(struct thread_detail) * thread_list_size);
-		rtos->thread_details->threadid = 1;
+		rtos->current_thread = RTOS_NO_CURRENT_THREAD;
+		rtos->thread_details->threadid = RTOS_NO_CURRENT_THREAD;
 		rtos->thread_details->exists = true;
 		rtos->thread_details->display_str = NULL;
 		rtos->thread_details->extra_info_str = NULL;
 		rtos->thread_details->thread_name_str = malloc(sizeof(tmp_str));
 		strcpy(rtos->thread_details->thread_name_str, tmp_str);
 
-		if (thread_list_size == 0) {
+		if (thread_list_size == 1) {
 			rtos->thread_count = 1;
 			return ERROR_OK;
 		}

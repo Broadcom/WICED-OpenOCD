@@ -27,23 +27,23 @@
 #include "rtos_standard_stackings.h"
 
 static const struct stack_register_offset rtos_embkernel_Cortex_M_stack_offsets[ARMV7M_NUM_CORE_REGS] = {
-	{ 0x24, 32 },		/* r0   */
-	{ 0x28, 32 },		/* r1   */
-	{ 0x2c, 32 },		/* r2   */
-	{ 0x30, 32 },		/* r3   */
-	{ 0x00, 32 },		/* r4   */
-	{ 0x04, 32 },		/* r5   */
-	{ 0x08, 32 },		/* r6   */
-	{ 0x0c, 32 },		/* r7   */
-	{ 0x10, 32 },		/* r8   */
-	{ 0x14, 32 },		/* r9   */
-	{ 0x18, 32 },		/* r10  */
-	{ 0x1c, 32 },		/* r11  */
-	{ 0x34, 32 },		/* r12  */
-	{ -2, 32 },		    /* sp   */
-	{ 0x38, 32 },		/* lr   */
-	{ 0x3c, 32 },		/* pc   */
-	{ 0x40, 32 },		/* xPSR */
+	{ 0x24,                      32 },		/* r0   */
+	{ 0x28,                      32 },		/* r1   */
+	{ 0x2c,                      32 },		/* r2   */
+	{ 0x30,                      32 },		/* r3   */
+	{ 0x00,                      32 },		/* r4   */
+	{ 0x04,                      32 },		/* r5   */
+	{ 0x08,                      32 },		/* r6   */
+	{ 0x0c,                      32 },		/* r7   */
+	{ 0x10,                      32 },		/* r8   */
+	{ 0x14,                      32 },		/* r9   */
+	{ 0x18,                      32 },		/* r10  */
+	{ 0x1c,                      32 },		/* r11  */
+	{ 0x34,                      32 },		/* r12  */
+	{ REGISTER_IS_STACK_POINTER, 32 },		/* sp   */
+	{ 0x38,                      32 },		/* lr   */
+	{ 0x3c,                      32 },		/* pc   */
+	{ 0x40,                      32 },		/* xPSR */
 };
 
 const struct rtos_register_stacking rtos_embkernel_Cortex_M_stacking = {

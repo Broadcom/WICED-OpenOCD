@@ -29,23 +29,23 @@
 #include "target/armv7m.h"
 
 static const struct stack_register_offset rtos_chibios_arm_v7m_stack_offsets[ARMV7M_NUM_CORE_REGS] = {
-	{ -1,   32 },		/* r0   */
-	{ -1,   32 },		/* r1   */
-	{ -1,   32 },		/* r2   */
-	{ -1,   32 },		/* r3   */
-	{ 0x00, 32 },		/* r4   */
-	{ 0x04, 32 },		/* r5   */
-	{ 0x08, 32 },		/* r6   */
-	{ 0x0c, 32 },		/* r7   */
-	{ 0x10, 32 },		/* r8   */
-	{ 0x14, 32 },		/* r9   */
-	{ 0x18, 32 },		/* r10  */
-	{ 0x1c, 32 },		/* r11  */
-	{ -1,   32 },		/* r12  */
-	{ -2,   32 },		/* sp   */
-	{ -1,   32 },		/* lr   */
-	{ 0x20, 32 },		/* pc   */
-	{ -1,   32 },		/* xPSR */
+	{ REGISTER_NOT_STACKED,       32 },		/* r0   */
+	{ REGISTER_NOT_STACKED,       32 },		/* r1   */
+	{ REGISTER_NOT_STACKED,       32 },		/* r2   */
+	{ REGISTER_NOT_STACKED,       32 },		/* r3   */
+	{ 0x00,                       32 },		/* r4   */
+	{ 0x04,                       32 },		/* r5   */
+	{ 0x08,                       32 },		/* r6   */
+	{ 0x0c,                       32 },		/* r7   */
+	{ 0x10,                       32 },		/* r8   */
+	{ 0x14,                       32 },		/* r9   */
+	{ 0x18,                       32 },		/* r10  */
+	{ 0x1c,                       32 },		/* r11  */
+	{ REGISTER_NOT_STACKED,       32 },		/* r12  */
+	{ REGISTER_IS_STACK_POINTER,  32 },		/* sp   */
+	{ REGISTER_NOT_STACKED,       32 },		/* lr   */
+	{ 0x20,                       32 },		/* pc   */
+	{ REGISTER_NOT_STACKED,       32 },		/* xPSR */
 };
 
 const struct rtos_register_stacking rtos_chibios_arm_v7m_stacking = {
@@ -57,23 +57,23 @@ const struct rtos_register_stacking rtos_chibios_arm_v7m_stacking = {
 };
 
 static const struct stack_register_offset rtos_chibios_arm_v7m_stack_offsets_w_fpu[ARMV7M_NUM_CORE_REGS] = {
-	{ -1,   32 },		/* r0   */
-	{ -1,   32 },		/* r1   */
-	{ -1,   32 },		/* r2   */
-	{ -1,   32 },		/* r3   */
-	{ 0x40, 32 },		/* r4   */
-	{ 0x44, 32 },		/* r5   */
-	{ 0x48, 32 },		/* r6   */
-	{ 0x4c, 32 },		/* r7   */
-	{ 0x50, 32 },		/* r8   */
-	{ 0x54, 32 },		/* r9   */
-	{ 0x58, 32 },		/* r10  */
-	{ 0x5c, 32 },		/* r11  */
-	{ -1,   32 },		/* r12  */
-	{ -2,   32 },		/* sp   */
-	{ -1,   32 },		/* lr   */
-	{ 0x60, 32 },		/* pc   */
-	{ -1,   32 },		/* xPSR */
+	{ REGISTER_NOT_STACKED,      32 },		/* r0   */
+	{ REGISTER_NOT_STACKED,      32 },		/* r1   */
+	{ REGISTER_NOT_STACKED,      32 },		/* r2   */
+	{ REGISTER_NOT_STACKED,      32 },		/* r3   */
+	{ 0x40,                      32 },		/* r4   */
+	{ 0x44,                      32 },		/* r5   */
+	{ 0x48,                      32 },		/* r6   */
+	{ 0x4c,                      32 },		/* r7   */
+	{ 0x50,                      32 },		/* r8   */
+	{ 0x54,                      32 },		/* r9   */
+	{ 0x58,                      32 },		/* r10  */
+	{ 0x5c,                      32 },		/* r11  */
+	{ REGISTER_NOT_STACKED,      32 },		/* r12  */
+	{ REGISTER_IS_STACK_POINTER, 32 },		/* sp   */
+	{ REGISTER_NOT_STACKED,      32 },		/* lr   */
+	{ 0x60,                      32 },		/* pc   */
+	{ REGISTER_NOT_STACKED,      32 },		/* xPSR */
 };
 
 const struct rtos_register_stacking rtos_chibios_arm_v7m_stacking_w_fpu = {

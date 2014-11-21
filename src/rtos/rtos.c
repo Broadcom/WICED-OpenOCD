@@ -65,7 +65,7 @@ static int os_alloc(struct target *target, struct rtos_type *ostype)
 		return JIM_ERR;
 
 	os->type = ostype;
-	os->current_threadid = -1;
+	os->current_threadid = RTOS_NO_CURRENT_THREAD;
 	os->current_thread = 0;
 	os->symbols = NULL;
 	os->target = target;
@@ -422,7 +422,7 @@ int rtos_get_gdb_reg_list(struct connection *connection)
 {
 	struct target *target = get_target_from_connection(connection);
 	int64_t current_threadid = target->rtos->current_threadid;
-	if ((target->rtos != NULL) && (current_threadid != -1) &&
+	if ((target->rtos != NULL) && (current_threadid != RTOS_NO_CURRENT_THREAD) &&
 			(current_threadid != 0) &&
 			((current_threadid != target->rtos->current_thread) ||
 			(target->smp))) {	/* in smp several current thread are possible */
