@@ -84,6 +84,7 @@
 #define C_HALT		(1 << 1)
 #define C_STEP		(1 << 2)
 #define C_MASKINTS	(1 << 3)
+#define C_SNAPSTALL (1 << 5)
 #define S_REGRDY	(1 << 16)
 #define S_HALT		(1 << 17)
 #define S_SLEEP		(1 << 18)

@@ -2292,6 +2292,27 @@ COMMAND_HANDLER(handle_cortex_m_mask_interrupts_command)
 	return ERROR_OK;
 }
 
+
+COMMAND_HANDLER(handle_cortex_m_disconnect_command)
+{
+	struct target *target = get_current_target(CMD_CTX);
+	struct cortex_m_common *cortex_m = target_to_cm(target);
+	int retval;
+
+	/* create new register mask with Debugging turned off */
+	cortex_m->dcb_dhcsr = DBGKEY & ( ~(C_DEBUGEN | C_HALT | C_STEP | C_MASKINTS | C_SNAPSTALL ) );
+
+	retval = mem_ap_write_atomic_u32(cortex_m->armv7m.debug_ap, DCB_DHCSR, cortex_m->dcb_dhcsr);
+	if (retval != ERROR_OK) {
+		target->state = TARGET_UNKNOWN;
+		return retval;
+	}
+
+	command_print(CMD_CTX, "cortex_m disconnect" );
+
+	return ERROR_OK;
+}
+
 COMMAND_HANDLER(handle_cortex_m_reset_config_command)
 {
 	struct target *target = get_current_target(CMD_CTX);
@@ -2350,6 +2371,13 @@ static const struct command_registration cortex_m_exec_command_handlers[] = {
 		.mode = COMMAND_ANY,
 		.help = "configure software reset handling",
 		.usage = "['srst'|'sysresetreq'|'vectreset']",
+	},
+	{
+		.name = "disconnect",
+		.handler = handle_cortex_m_disconnect_command,
+		.mode = COMMAND_ANY,
+		.help = "Disconnect debugger so that DHCSR.C_DEBUGEN is zero",
+		.usage = "",
 	},
 	COMMAND_REGISTRATION_DONE
 };
