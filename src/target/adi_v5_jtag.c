@@ -286,7 +286,7 @@ static int jtagdp_transaction_endcheck(struct adiv5_dap *dap)
 			/* Clear Sticky Error Bits */
 			retval = adi_jtag_scan_inout_check_u32(dap, JTAG_DP_DPACC,
 					DP_CTRL_STAT, DPAP_WRITE,
-					dap->dp_ctrl_stat | SSTICKYORUN
+					dap->dp_ctrl_stat | CDBGPWRUPREQ | CSYSPWRUPREQ | SSTICKYORUN
 						| SSTICKYERR, NULL, 0);
 			if (retval != ERROR_OK)
 				return retval;
