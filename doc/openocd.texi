@@ -4190,6 +4190,11 @@ The value should normally correspond to a static mapping for the
 @option{FreeRTOS}|@option{linux}|@option{ChibiOS}|@option{embKernel}|@option{mqx}
 @xref{gdbrtossupport,,RTOS Support}.
 
+@item @code{-memorymap} (@option{RO}|@option{WO}|@option{RW}) @var{start_address} @var{size} [@var{short_name}] [@var{long_name}] -- Add a memory map region.
+If any memory map regions are specified, then memory reads & writes are limited to only those areas - preventing accesses to invalid regions.
+Currently this does @emph{not} yet use the "qXfer:memory-map:read" packet to inform GDB of the valid regions.
+
+
 @end itemize
 @end deffn
 

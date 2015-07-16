@@ -69,6 +69,7 @@ static int target_array2mem(Jim_Interp *interp, struct target *target,
 static int target_mem2array(Jim_Interp *interp, struct target *target,
 		int argc, Jim_Obj * const *argv);
 static int target_register_user_commands(struct command_context *cmd_ctx);
+static int add_memory_mapping(Jim_GetOptInfo *goi, struct target *target);
 static int target_get_gdb_fileio_info_default(struct target *target,
 		struct gdb_fileio_info *fileio_info);
 static int target_gdb_fileio_end_default(struct target *target, int retcode,
@@ -1026,6 +1027,42 @@ int target_read_memory(struct target *target,
 		LOG_ERROR("Target %s doesn't support read_memory", target_name(target));
 		return ERROR_FAIL;
 	}
+
+	if (target->memory_map_list_head != NULL) {
+		/* There is a memory map defined for this target
+		 * Check that the requested read is for a location that is valid
+		 * according to the memory map
+		 */
+		uint64_t bytes_read = 0;
+		struct memory_map_elem *curr_elem = target->memory_map_list_head;
+		memset(buffer, 0, count*size);
+		do {
+			/* Calculate the intersection of the request and the current memory map block (if any) */
+			uint64_t start = MAX(curr_elem->start_address, address);
+			uint64_t end   = MIN(curr_elem->start_address + curr_elem->size, address + count*size);
+
+			/* If there is data that can be read from this block, read it */
+			if ((end > start) &&
+			    (curr_elem->access != MEMORY_MAP_WRITE_ONLY)) {
+				int retval = target->type->read_memory(target, start, size, (end - start)/size, buffer);
+				if (retval != 0)
+					return retval;
+
+				if ((end - start) % size)
+					LOG_WARNING("Ignoring read off end of memory map area");
+
+				bytes_read += size*((end - start)/size);
+			}
+			curr_elem = curr_elem->next_elem;
+		} while (curr_elem != NULL);
+		if (count*size != bytes_read) {
+			LOG_WARNING("Ignoring read of non readable area - Request address: 0x%X, "
+						"Request size %d. Bytes successfully read: %d", address, count*size, (int)bytes_read);
+		}
+		return ERROR_OK;
+	}
+
+	/* Read without memory map */
 	return target->type->read_memory(target, address, size, count, buffer);
 }
 
@@ -1054,6 +1091,41 @@ int target_write_memory(struct target *target,
 		LOG_ERROR("Target %s doesn't support write_memory", target_name(target));
 		return ERROR_FAIL;
 	}
+
+	if (target->memory_map_list_head != NULL)	{
+		/* There is a memory map defined for this target
+		 * Check that the requested write is for a location that is valid
+		 * according to the memory map
+		 */
+		uint64_t bytes_written = 0;
+		struct memory_map_elem *curr_elem = target->memory_map_list_head;
+		do {
+			/* Calculate the intersection of the request and the current memory map block (if any) */
+			uint64_t start = MAX(curr_elem->start_address, address);
+			uint64_t end   = MIN(curr_elem->start_address + curr_elem->size, address + count*size);
+
+			/* If there is data that can be written to this block, write it */
+			if ((end > start) &&
+			    (curr_elem->access != MEMORY_MAP_READ_ONLY)) {
+				int retval = target->type->write_memory(target, start, size, (end - start)/size, buffer);
+				if (retval != 0)
+					return retval;
+
+				if ((end - start) % count)
+					LOG_WARNING("Ignoring write off end of memory map area");
+
+				bytes_written += size*((end - start)/size);
+			}
+			curr_elem = curr_elem->next_elem;
+		} while (curr_elem != NULL);
+		if (count*size != bytes_written) {
+			LOG_WARNING("Ignoring write to non writable area - Request address: 0x%X, "
+						"Request size %d. Bytes successfully written: %d", address, count*size, (int)bytes_written);
+		}
+		return ERROR_OK;
+	}
+
+	/* Write without memory map */
 	return target->type->write_memory(target, address, size, count, buffer);
 }
 
@@ -4286,6 +4358,7 @@ enum target_cfg_param {
 	TCFG_CHAIN_POSITION,
 	TCFG_DBGBASE,
 	TCFG_RTOS,
+	TCFG_MEMORYMAP,
 };
 
 static Jim_Nvp nvp_config_opts[] = {
@@ -4300,6 +4373,7 @@ static Jim_Nvp nvp_config_opts[] = {
 	{ .name = "-chain-position",   .value = TCFG_CHAIN_POSITION },
 	{ .name = "-dbgbase",          .value = TCFG_DBGBASE },
 	{ .name = "-rtos",             .value = TCFG_RTOS },
+	{ .name = "-memorymap",        .value = TCFG_MEMORYMAP },
 	{ .name = NULL, .value = -1 }
 };
 
@@ -4574,6 +4648,17 @@ no_params:
 			}
 			/* loop for more */
 			break;
+
+		case TCFG_MEMORYMAP:
+			/* RTOS */
+			{
+				int result = add_memory_mapping(goi, target);
+				if (result != JIM_OK)
+					return result;
+			}
+			/* loop for more */
+			break;
+
 		}
 	} /* while (goi->argc) */
 
@@ -4581,6 +4666,93 @@ no_params:
 		/* done - we return */
 	return JIM_OK;
 }
+
+static int add_memory_mapping(Jim_GetOptInfo *goi, struct target *target)
+{
+	char *type_str;
+	enum memory_map_access type;
+	char *short_name = NULL;
+	char *long_name = NULL;
+	int64_t start_addr;
+	int64_t size;
+	int retval;
+
+	if ((goi->argc < 3) || (goi->argc > 6)) {
+		Jim_WrongNumArgs(goi->interp, goi->argc, goi->argv,
+							"<type> <start_addr> <size> [short_name] [long_name] [parent]");
+		return JIM_ERR;
+	}
+
+	/* Parse type - must be RW, RO or WO */
+	retval = Jim_GetOpt_String(goi, &type_str, NULL);
+	if (retval != JIM_OK)
+		return retval;
+	if (strcmp(type_str, "RW") == 0)
+		type = MEMORY_MAP_READ_WRITE;
+	else if (strcmp(type_str, "RO") == 0)
+		type = MEMORY_MAP_READ_ONLY;
+	else if (strcmp(type_str, "WO") == 0)
+		type = MEMORY_MAP_WRITE_ONLY;
+	else {
+		Jim_SetResultFormatted(goi->interp,
+				"memory map field type must be \"RW\", \"RO\" or \"WO\"");
+		return JIM_ERR;
+	}
+
+	/* Parse Block start address */
+	retval = Jim_GetOpt_Wide(goi, (long long *) &start_addr);
+	if (retval != JIM_OK)
+		return retval;
+
+	/* Parse Block size */
+	retval = Jim_GetOpt_Wide(goi, (long long *) &size);
+	if (retval != JIM_OK)
+		return retval;
+
+	/* Parse Short Name if available */
+	if (goi->argc > 0) {
+		retval = Jim_GetOpt_String(goi, &short_name, NULL);
+		if (retval != JIM_OK)
+			return retval;
+	}
+
+	/* Parse Long Name if available */
+	if (goi->argc > 0) {
+		retval = Jim_GetOpt_String(goi, &long_name, NULL);
+		if (retval != JIM_OK)
+			return retval;
+	}
+
+	/* Create a new memory map list element and populate it */
+	struct memory_map_elem *new_item = (struct memory_map_elem *) malloc(sizeof(struct memory_map_elem));
+	if (new_item == NULL) {
+		Jim_SetResultFormatted(goi->interp,
+				"Failed to allocate space for new memory map item");
+		return JIM_ERR;
+	}
+
+	new_item->access = type;
+	new_item->short_name = strdup(short_name);
+	new_item->long_name = strdup(long_name);
+	new_item->size = size;
+	new_item->start_address = start_addr;
+	new_item->next_elem = NULL;
+
+	/* Insert new element into linked list */
+	if (target->memory_map_list_head == NULL) {
+		target->memory_map_list_head = new_item;
+	} else {
+		struct memory_map_elem *curr_item = target->memory_map_list_head;
+		while (curr_item->next_elem != NULL)
+			curr_item = curr_item->next_elem;
+
+		curr_item->next_elem = new_item;
+	}
+
+	return JIM_OK;
+}
+
+
 
 static int jim_target_configure(Jim_Interp *interp, int argc, Jim_Obj * const *argv)
 {
