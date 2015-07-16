@@ -141,6 +141,7 @@ AC_CHECK_FUNCS([strndup])
 AC_CHECK_FUNCS([strnlen])
 AC_CHECK_FUNCS([gettimeofday])
 AC_CHECK_FUNCS([usleep])
+AC_CHECK_FUNCS([nanosleep])
 AC_CHECK_FUNCS([vasprintf])
 
 build_bitbang=no

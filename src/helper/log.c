@@ -453,7 +453,7 @@ void alive_sleep(uint64_t ms)
 		if (sleep_a_bit > napTime)
 			sleep_a_bit = napTime;
 
-		usleep(sleep_a_bit * 1000);
+		openocd_usleep(sleep_a_bit * 1000);
 		keep_alive();
 	}
 }

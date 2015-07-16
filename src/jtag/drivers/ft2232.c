@@ -3676,7 +3676,7 @@ static int signalyzer_h_init(void)
 		return ERROR_JTAG_DEVICE_ERROR;
 	}
 
-	usleep(100000);
+	openocd_usleep(100000);
 
 	status = signalyzer_h_ctrl_read(SIGNALYZER_COMMAND_ADDR, &read_buf[0]);
 	if (status != FT_OK) {

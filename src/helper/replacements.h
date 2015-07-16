@@ -120,9 +120,22 @@ char *strndup(const char *s, size_t n);
 size_t strnlen(const char *s, size_t maxlen);
 #endif	/* HAVE_STRNLEN */
 
-#ifndef HAVE_USLEEP
-#ifdef _WIN32
-static inline unsigned usleep(unsigned int usecs)
+
+#ifdef HAVE_NANOSLEEP
+static inline unsigned openocd_usleep(unsigned int usecs)
+{
+	struct timespec sleep_ts = { .tv_sec = usecs/1000000, .tv_nsec = 1000*usecs - 1000000000*(usecs/1000000) };
+	nanosleep(&sleep_ts, &sleep_ts);
+	return 0;
+}
+#elif defined(HAVE_USLEEP)   /* nanosleep missing but have usleep */
+static inline unsigned openocd_usleep(unsigned int usecs)
+{
+	return usleep(usecs);
+}
+#else  /* Both nanosleep and usleep missing */
+#ifdef _WIN32   /* Fake usleep via low resolution sleep for win32 platforms */
+static inline unsigned openocd_usleep(unsigned int usecs)
 {
 	Sleep((usecs/1000));
 	return 0;
@@ -130,7 +143,7 @@ static inline unsigned usleep(unsigned int usecs)
 #else
 #error no usleep defined for your platform
 #endif
-#endif	/* HAVE_USLEEP */
+#endif	/* HAVE_NANOSLEEP & HAVE_USLEEP */
 
 /* Windows specific */
 #ifdef _WIN32

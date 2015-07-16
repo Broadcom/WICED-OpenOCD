@@ -850,7 +850,7 @@ void jtag_execute_queue_noclear(void)
 		 * or behavior when delaying after flushing the queue,
 		 * e.g. to simulate long roundtrip times.
 		 */
-		usleep(jtag_flush_queue_sleep * 1000);
+		openocd_usleep(jtag_flush_queue_sleep * 1000);
 	}
 }
 
@@ -887,7 +887,7 @@ static int jtag_reset_callback(enum jtag_event event, void *priv)
 void jtag_sleep(uint32_t us)
 {
 	if (us < 1000)
-		usleep(us);
+		openocd_usleep(us);
 	else
 		alive_sleep((us+999)/1000);
 }

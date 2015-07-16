@@ -622,7 +622,7 @@ static int poll_for_complete_op(struct target *target, const char *text)
 {
 	uint16_t poll_complete_status;
 	for (int poll_cycle_count = 0; poll_cycle_count < 100; poll_cycle_count++) {
-		usleep(25);
+		openocd_usleep(25);
 		target_read_u16(target, MX3_NF_CFG2, &poll_complete_status);
 		if (poll_complete_status & MX3_NF_BIT_OP_DONE)
 			break;

@@ -204,7 +204,7 @@ static int ublast2_libusb_init(struct ublast_lowlevel *low)
 	} else {
 		int retry = 10;
 		while (jtag_libusb_open(vids_renum, pids_renum, NULL, &low->libusb_dev) != ERROR_OK && retry--) {
-			usleep(1000000);
+			openocd_usleep(1000000);
 			LOG_INFO("Waiting for renumerate...");
 		}
 

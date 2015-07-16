@@ -447,7 +447,7 @@ static void usbprog_jtag_write_and_read(struct usbprog_jtag *usbprog_jtag, char 
 
 		if (usb_bulk_write(usbprog_jtag->usb_handle, 3, tmp, 64, 1000) == 64) {
 			/* LOG_INFO("HALLLLOOO2 %i",(int)tmp[0]); */
-			usleep(1);
+			openocd_usleep(1);
 			int timeout = 0;
 			while (usb_bulk_read(usbprog_jtag->usb_handle, 0x82, tmp, 64, 1000) < 1) {
 				timeout++;
@@ -490,7 +490,7 @@ static void usbprog_jtag_read_tdo(struct usbprog_jtag *usbprog_jtag, char *buffe
 
 		/* LOG_INFO("HALLLLOOO3 %i",(int)tmp[0]); */
 		int timeout = 0;
-		usleep(1);
+		openocd_usleep(1);
 		while (usb_bulk_read(usbprog_jtag->usb_handle, 0x82, tmp, 64, 10) < 1) {
 			timeout++;
 			if (timeout > 10)

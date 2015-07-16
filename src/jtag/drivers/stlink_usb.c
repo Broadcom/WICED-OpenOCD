@@ -422,7 +422,7 @@ static int stlink_cmd_allow_retry(void *handle, const uint8_t *buf, int size)
 			return res;
 		res = stlink_usb_error_check(handle);
 		if (res == ERROR_WAIT && retries < MAX_WAIT_RETRIES) {
-			usleep((1<<retries++) * 1000);
+			openocd_usleep((1<<retries++) * 1000);
 			continue;
 		}
 		return res;
@@ -1418,7 +1418,7 @@ static int stlink_usb_read_mem(void *handle, uint32_t addr, uint32_t size,
 				uint32_t head_bytes = 4 - (addr % 4);
 				retval = stlink_usb_read_mem8(handle, addr, head_bytes, buffer);
 				if (retval == ERROR_WAIT && retries < MAX_WAIT_RETRIES) {
-					usleep((1<<retries++) * 1000);
+					openocd_usleep((1<<retries++) * 1000);
 					continue;
 				}
 				if (retval != ERROR_OK)
@@ -1437,7 +1437,7 @@ static int stlink_usb_read_mem(void *handle, uint32_t addr, uint32_t size,
 			retval = stlink_usb_read_mem8(handle, addr, bytes_remaining, buffer);
 
 		if (retval == ERROR_WAIT && retries < MAX_WAIT_RETRIES) {
-			usleep((1<<retries++) * 1000);
+			openocd_usleep((1<<retries++) * 1000);
 			continue;
 		}
 		if (retval != ERROR_OK)
@@ -1488,7 +1488,7 @@ static int stlink_usb_write_mem(void *handle, uint32_t addr, uint32_t size,
 				uint32_t head_bytes = 4 - (addr % 4);
 				retval = stlink_usb_write_mem8(handle, addr, head_bytes, buffer);
 				if (retval == ERROR_WAIT && retries < MAX_WAIT_RETRIES) {
-					usleep((1<<retries++) * 1000);
+					openocd_usleep((1<<retries++) * 1000);
 					continue;
 				}
 				if (retval != ERROR_OK)
@@ -1507,7 +1507,7 @@ static int stlink_usb_write_mem(void *handle, uint32_t addr, uint32_t size,
 		} else
 			retval = stlink_usb_write_mem8(handle, addr, bytes_remaining, buffer);
 		if (retval == ERROR_WAIT && retries < MAX_WAIT_RETRIES) {
-			usleep((1<<retries++) * 1000);
+			openocd_usleep((1<<retries++) * 1000);
 			continue;
 		}
 		if (retval != ERROR_OK)
@@ -1691,7 +1691,7 @@ static int stlink_usb_open(struct hl_interface_param_s *param, void **fd)
 			  Give the device one second to settle down and
 			  reenumerate.
 			 */
-			usleep(1 * 1000 * 1000);
+			openocd_usleep(1 * 1000 * 1000);
 			retry_count--;
 		}
 	} while (1);

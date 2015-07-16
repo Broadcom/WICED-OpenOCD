@@ -224,7 +224,7 @@ static int gdb_get_char_inner(struct connection *connection, int *next_char)
 
 		switch (errno) {
 			case WSAEWOULDBLOCK:
-				usleep(1000);
+				openocd_usleep(1000);
 				break;
 			case WSAECONNABORTED:
 				gdb_con->closed = 1;
@@ -239,7 +239,7 @@ static int gdb_get_char_inner(struct connection *connection, int *next_char)
 #else
 		switch (errno) {
 			case EAGAIN:
-				usleep(1000);
+				openocd_usleep(1000);
 				break;
 			case ECONNABORTED:
 				gdb_con->closed = 1;

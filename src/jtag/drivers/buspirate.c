@@ -833,7 +833,7 @@ static void buspirate_jtag_enable(int fd)
 
 	LOG_DEBUG("Entering binary mode");
 	buspirate_serial_write(fd, tmp, 20);
-	usleep(10000);
+	openocd_usleep(10000);
 
 	/* reads 1 to n "BBIO1"s and one "OCD1" */
 	while (!done) {
@@ -880,7 +880,7 @@ static void buspirate_jtag_reset(int fd)
 
 	tmp[0] = 0x00; /* exit OCD1 mode */
 	buspirate_serial_write(fd, tmp, 1);
-	usleep(10000);
+	openocd_usleep(10000);
 	/* We ignore the return value here purposly, nothing we can do */
 	buspirate_serial_read(fd, tmp, 5);
 	if (strncmp(tmp, "BBIO1", 5) == 0) {

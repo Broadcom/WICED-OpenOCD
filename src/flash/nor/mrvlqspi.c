@@ -313,7 +313,7 @@ static int mrvlqspi_read_byte(struct flash_bank *bank, uint8_t *data)
 		LOG_DEBUG("status: 0x%08" PRIx32, val);
 		if ((val & RFIFO_EMPTY) == 0)
 			break;
-		usleep(10);
+		openocd_usleep(10);
 	}
 
 	retval = target_read_u32(target,

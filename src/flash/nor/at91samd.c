@@ -760,7 +760,7 @@ static int samd_write(struct flash_bank *bank, const uint8_t *buffer,
 		}
 
 		/* Access through AHB is stalled while flash is being programmed */
-		usleep(200);
+		openocd_usleep(200);
 
 		if (samd_check_error(bank->target)) {
 			LOG_ERROR("%s: write failed at address 0x%08" PRIx32, __func__, address);

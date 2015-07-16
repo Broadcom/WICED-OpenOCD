@@ -187,7 +187,7 @@ static int fm3_busy_wait(struct target *target, uint32_t offset, int timeout_ms)
 			/* finish anyway */
 			break;
 		}
-		usleep(1000);
+		openocd_usleep(1000);
 		++ms;
 
 		/* Polling time exceeded? */

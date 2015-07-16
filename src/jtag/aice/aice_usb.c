@@ -2124,7 +2124,7 @@ static int aice_usb_open(struct aice_port_param_s *param)
 	 * on win32 this may take a second or two to re-enumerate */
 	int retval;
 	while ((retval = jtag_libusb_open(vids, pids, NULL, &devh)) != ERROR_OK) {
-		usleep(1000);
+		openocd_usleep(1000);
 		timeout--;
 		if (!timeout)
 			break;

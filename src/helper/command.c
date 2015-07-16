@@ -1178,7 +1178,7 @@ COMMAND_HANDLER(handle_sleep_command)
 		long long then = timeval_ms();
 		while (timeval_ms() - then < (long long)duration) {
 			target_call_timer_callbacks_now();
-			usleep(1000);
+			openocd_usleep(1000);
 		}
 	} else
 		busy_sleep(duration);

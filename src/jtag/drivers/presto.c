@@ -245,7 +245,7 @@ static int presto_open_ftd2xx(char *req_serial)
 	/* delay between first write/read turnaround (after purge?) necessary
 	 * under Linux for unknown reason,
 	 * probably a bug in library threading */
-	usleep(100000);
+	openocd_usleep(100000);
 	presto->status = FT_Read(presto->handle, &presto_data, 1, &ftbytes);
 	if (presto->status != FT_OK)
 		return ERROR_JTAG_DEVICE_ERROR;
@@ -269,7 +269,7 @@ static int presto_open_ftd2xx(char *req_serial)
 			if (presto->status != FT_OK)
 				return ERROR_JTAG_DEVICE_ERROR;
 		}
-		usleep(100000);
+		openocd_usleep(100000);
 
 		presto->status = FT_SetBitMode(presto->handle, 0x00, 0);
 		if (presto->status != FT_OK)
@@ -286,7 +286,7 @@ static int presto_open_ftd2xx(char *req_serial)
 
 		/* delay between first write/read turnaround (after purge?) necessary under Linux for unknown reason,
 		   probably a bug in library threading */
-		usleep(100000);
+		openocd_usleep(100000);
 		presto->status = FT_Read(presto->handle, &presto_data, 1, &ftbytes);
 		if (presto->status != FT_OK)
 			return ERROR_JTAG_DEVICE_ERROR;

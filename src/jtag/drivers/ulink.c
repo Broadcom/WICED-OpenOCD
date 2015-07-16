@@ -378,7 +378,7 @@ int ulink_load_firmware_and_renumerate(struct ulink **device,
 	if (ret != ERROR_OK)
 		return ret;
 
-	usleep(delay);
+	openocd_usleep(delay);
 
 	ret = ulink_usb_open(device);
 	if (ret != ERROR_OK)

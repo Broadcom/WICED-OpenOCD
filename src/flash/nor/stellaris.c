@@ -1400,7 +1400,7 @@ COMMAND_HANDLER(stellaris_handle_recover_command)
 	retval = jtag_execute_queue();
 
 	/* wait 400+ msec ... OK, "1+ second" is simpler */
-	usleep(1000);
+	openocd_usleep(1000);
 
 user_action:
 	/* USER INTERVENTION required for the power cycle
