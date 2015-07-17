@@ -905,7 +905,17 @@ static int cortex_a_poll(struct target *target)
 	if (DSCR_RUN_MODE(dscr) == (DSCR_CORE_HALTED | DSCR_CORE_RESTARTED)) {
 		if (prev_target_state != TARGET_HALTED) {
 			/* We have a halting debug event */
-			LOG_DEBUG("Target halted");
+			int moe = (dscr & DSCR_ENTRY_MASK)>>2;
+			LOG_DEBUG("Target halted - Cause: %s", (moe ==  0) ? "Halt Request"            :
+												   (moe ==  1) ? "Breakpoint"              :
+												   (moe ==  2) ? "Asynchronous Watchpoint" :
+												   (moe ==  3) ? "BKPT instruction"        :
+												   (moe ==  4) ? "External Debug Request"  :
+												   (moe ==  5) ? "Vector Catch"            :
+												   (moe ==  6) ? "Data-side abort"         :
+												   (moe ==  7) ? "Instruction-side abort"  :
+												   (moe ==  8) ? "OS Unlock Catch"         :
+												   (moe == 10) ? "Synchronous Watchpoint"  : "Unknown");
 			target->state = TARGET_HALTED;
 			if ((prev_target_state == TARGET_RUNNING)
 				|| (prev_target_state == TARGET_UNKNOWN)
