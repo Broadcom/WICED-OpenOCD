@@ -8000,7 +8000,7 @@ In addition to sending strings, characters, and
 arrays of various size integers from the target,
 @file{libdcc} also exports a software trace point mechanism.
 The target being debugged may
-issue trace messages which include a 24-bit @dfn{trace point} number.
+issue trace messages which include a 24-bit @dfn{trace_point config} number.
 Trace point support includes two distinct mechanisms,
 each supported by a command:
 
@@ -8041,25 +8041,31 @@ as used by Linux with CONFIG_DEBUG_ICEDCC;
 otherwise the libdcc format is used.
 @end deffn
 
-@deffn Command {trace history} [@option{clear}|count]
+@deffn Command {trace_point history} [@option{clear}|count]
 With no parameter, displays all the trace points that have triggered
 in the order they triggered.
 With the parameter @option{clear}, erases all current trace history records.
 With a @var{count} parameter, allocates space for that many
 history records.
+
+Note: Command was previously named "trace history", but has been renamed to avoid clashing
+with standard TCL function "trace"
 @end deffn
 
-@deffn Command {trace point} [@option{clear}|identifier]
+@deffn Command {trace_point config} [@option{clear}|identifier]
 With no parameter, displays all trace point identifiers and how many times
 they have been triggered.
 With the parameter @option{clear}, erases all current trace point counters.
 With a numeric @var{identifier} parameter, creates a new a trace point counter
 and associates it with that identifier.
 
+Note: Command was previously named "trace point", but has been renamed to avoid clashing
+with standard TCL function "trace"
+
 @emph{Important:} The identifier and the trace point number
 are not related except by this command.
 These trace point numbers always start at zero (from server startup,
-or after @command{trace point clear}) and count up from there.
+or after @command{trace_point config clear}) and count up from there.
 @end deffn
 
 

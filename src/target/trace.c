@@ -151,7 +151,7 @@ static const struct command_registration trace_exec_command_handlers[] = {
 		.usage = "['clear'|size]",
 	},
 	{
-		.name = "point",
+		.name = "config",
 		.handler = handle_trace_point_command,
 		.mode = COMMAND_EXEC,
 		.help = "display trace points, clear list of trace points, "
@@ -162,9 +162,9 @@ static const struct command_registration trace_exec_command_handlers[] = {
 };
 static const struct command_registration trace_command_handlers[] = {
 	{
-		.name = "trace",
+		.name = "trace_point",
 		.mode = COMMAND_EXEC,
-		.help = "trace command group",
+		.help = "trace_point command group",
 		.usage = "",
 		.chain = trace_exec_command_handlers,
 	},
