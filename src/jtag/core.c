@@ -1569,13 +1569,6 @@ int jtag_init(struct command_context *cmd_ctx)
 	/* guard against oddball hardware: force resets to be inactive */
 	jtag_add_reset(0, 0);
 
-	/* some targets enable us to connect with srst asserted */
-	if (jtag_reset_config & RESET_CNCT_UNDER_SRST) {
-		if (jtag_reset_config & RESET_SRST_NO_GATING)
-			jtag_add_reset(0, 1);
-		else
-			LOG_WARNING("\'srst_nogate\' reset_config option is required");
-	}
 	retval = jtag_execute_queue();
 	if (retval != ERROR_OK)
 		return retval;
