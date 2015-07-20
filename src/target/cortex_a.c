@@ -55,6 +55,7 @@
 #include "target_request.h"
 #include "target_type.h"
 #include "arm_opcodes.h"
+#include "jtag/interface.h"
 #include <helper/time_support.h>
 
 static int cortex_a_poll(struct target *target);
@@ -951,6 +952,20 @@ static int cortex_a_halt(struct target *target)
 	int retval = ERROR_OK;
 	uint32_t dscr;
 	struct armv7a_common *armv7a = target_to_armv7a(target);
+
+	if (target->state == TARGET_RESET) {
+		if ((jtag_get_reset_config() & RESET_SRST_PULLS_TRST) && jtag_get_srst()) {
+			LOG_ERROR("can't request a halt while in reset if nSRST pulls nTRST");
+			return ERROR_TARGET_FAILURE;
+		} else {
+			/* we came here in a reset_halt or reset_init sequence
+			 * debug entry was already prepared in cortex_a_assert_reset()
+			 */
+			target->debug_reason = DBG_REASON_DBGRQ;
+
+			return ERROR_OK;
+		}
+	}
 
 	/*
 	 * Tell the core to be halted by writing DRCR with 0x1
@@ -1897,22 +1912,118 @@ static int cortex_a_remove_breakpoint(struct target *target, struct breakpoint *
 
 static int cortex_a_assert_reset(struct target *target)
 {
+	int retval;
 	struct armv7a_common *armv7a = target_to_armv7a(target);
 
 	LOG_DEBUG(" ");
 
-	/* FIXME when halt is requested, make it work somehow... */
-
 	/* Issue some kind of warm reset. */
-	if (target_has_event_action(target, TARGET_EVENT_RESET_ASSERT))
+	if (target_has_event_action(target, TARGET_EVENT_RESET_ASSERT)) {
+		/* allow scripts to override the reset event */
+
 		target_handle_event(target, TARGET_EVENT_RESET_ASSERT);
-	else if (jtag_get_reset_config() & RESET_HAS_SRST) {
-		/* REVISIT handle "pulls" cases, if there's
-		 * hardware that needs them to work.
-		 */
-		jtag_add_reset(0, 1);
+		register_cache_invalidate(armv7a->arm.core_cache);
+		target->state = TARGET_RESET;
+
+		return ERROR_OK;
+	}
+
+	/* Some cores support connecting while srst is asserted
+	 * use that mode if it has been configured - That way we can
+	 * be sure the JTAG pins will be usable (not set to GPIOs)
+	 */
+
+	bool srst_asserted = false;
+
+	enum reset_types jtag_reset_config = jtag_get_reset_config();
+
+	if ((jtag_reset_config & RESET_HAS_SRST) &&
+		(jtag_reset_config & RESET_SRST_NO_GATING)) {
+		adapter_assert_reset();
+		srst_asserted = true;
+	}
+
+	if (!target->reset_halt) {
+		uint32_t vcr;
+
+		/* Reset without halt */
+		/* clear the reset vector catch */
+		retval = mem_ap_read_atomic_u32(armv7a->debug_ap,
+				armv7a->debug_base + CPUDBG_VCR, &vcr);
+		if (retval != ERROR_OK)
+			return retval;
+		retval = mem_ap_write_atomic_u32(armv7a->debug_ap,
+				armv7a->debug_base + CPUDBG_VCR, vcr & (~VCR_RESET));
+		if (retval != ERROR_OK)
+			return retval;
+
+		/* Set restart bit in DRCR to ensure resume processor resumes if it was currently halted */
+		retval = mem_ap_write_atomic_u32(armv7a->debug_ap,
+				armv7a->debug_base + CPUDBG_DRCR, DRCR_RESTART);
+		if (retval != ERROR_OK)
+			return retval;
+
+
 	} else {
-		LOG_ERROR("%s: how to reset?", target_name(target));
+		uint32_t vcr;
+		uint32_t dscr;
+
+		/*
+		 * enter halting debug mode
+		 */
+		retval = mem_ap_read_atomic_u32(armv7a->debug_ap,
+				armv7a->debug_base + CPUDBG_DSCR, &dscr);
+		if (retval != ERROR_OK)
+			return retval;
+
+		retval = mem_ap_write_atomic_u32(armv7a->debug_ap,
+				armv7a->debug_base + CPUDBG_DSCR, dscr | DSCR_HALT_DBG_MODE);
+		if (retval != ERROR_OK)
+			return retval;
+
+		/* set the reset vector catch */
+		retval = mem_ap_read_atomic_u32(armv7a->debug_ap,
+				armv7a->debug_base + CPUDBG_VCR, &vcr);
+		if (retval != ERROR_OK)
+			return retval;
+		retval = mem_ap_write_atomic_u32(armv7a->debug_ap,
+				armv7a->debug_base + CPUDBG_VCR, vcr | VCR_RESET);
+		if (retval != ERROR_OK)
+			return retval;
+
+		/*
+		 * Tell the core to be halted by writing DRCR with 0x1
+		 */
+		retval = mem_ap_write_atomic_u32(armv7a->debug_ap,
+				armv7a->debug_base + CPUDBG_DRCR, DRCR_HALT);
+		if (retval != ERROR_OK)
+			return retval;
+	}
+
+	if (jtag_reset_config & RESET_HAS_SRST) {
+			/* default to asserting srst */
+			if (!srst_asserted)
+				adapter_assert_reset(); /* Assert reset when SRST gates JTAG */
+
+	} else {
+	    /* No SRST available - attempt to use warm reset */
+
+		LOG_DEBUG("%s: Executing a warm reset", target_name(target));
+		/* Hold processor in warm reset */
+		retval = mem_ap_write_atomic_u32(armv7a->debug_ap,
+				armv7a->debug_base + CPUDBG_PRCR, PRCR_WARM_RESET | PRCR_HOLD_NON_DEBUG_RESET);
+		if (retval != ERROR_OK)
+			return retval;
+	}
+
+	/* Read the Reset Status bit to determine whether core is currently in reset as required */
+	uint32_t prsr;
+	retval = mem_ap_read_atomic_u32(armv7a->debug_ap,
+			armv7a->debug_base + CPUDBG_PRSR, &prsr);
+	if (retval != ERROR_OK)
+		return retval;
+	if ((prsr & (PRSR_RESET_STATUS | PRSR_POWERUP_STATUS)) != (PRSR_RESET_STATUS | PRSR_POWERUP_STATUS)) {
+		LOG_ERROR("Error %s: Reset was not successfully asserted", target_name(target));
 		return ERROR_FAIL;
 	}
 
@@ -1930,17 +2041,56 @@ static int cortex_a_deassert_reset(struct target *target)
 
 	LOG_DEBUG(" ");
 
-	/* be certain SRST is off */
-	jtag_add_reset(0, 0);
+	/* be certain SRST is off (even for warm reset case)*/
+	adapter_deassert_reset();
+
+	enum reset_types jtag_reset_config = jtag_get_reset_config();
+
+	struct armv7a_common *armv7a = target_to_armv7a(target);
+
+	if (target->reset_halt) {
+		/* Target should now be halted due to vector-catch
+		 * which was set up in assert_reset
+		 */
+
+		uint32_t vcr;
+
+		LOG_DEBUG("%s: Clearing Reset Vector Catch ", target_name(target));
+
+		/* clear the reset vector-catch */
+		retval = mem_ap_read_atomic_u32(armv7a->debug_ap,
+				armv7a->debug_base + CPUDBG_VCR, &vcr);
+		if (retval != ERROR_OK)
+			return retval;
+		retval = mem_ap_write_atomic_u32(armv7a->debug_ap,
+				armv7a->debug_base + CPUDBG_VCR, vcr & (~VCR_RESET));
+		if (retval != ERROR_OK)
+			return retval;
+
+		if (!(jtag_reset_config & RESET_HAS_SRST)) {
+			LOG_DEBUG("%s: Clearing warm reset", target_name(target));
+
+			/* Clear warm reset */
+			retval = mem_ap_write_atomic_u32(armv7a->debug_ap,
+					armv7a->debug_base + CPUDBG_PRCR, 0);
+
+			if (retval != ERROR_OK)
+				return retval;
+		}
+	}
 
 	retval = cortex_a_poll(target);
 	if (retval != ERROR_OK)
 		return retval;
 
+	/* Check the requested state was achieved */
 	if (target->reset_halt) {
 		if (target->state != TARGET_HALTED) {
-			LOG_WARNING("%s: ran after reset and before halt ...",
+				LOG_WARNING("%s: ran after reset and before halt ...",
 				target_name(target));
+			if (!(jtag_reset_config & RESET_HAS_SRST))
+				LOG_WARNING("SRST probably cause powerdown of debug domain - Try "
+								"using \'reset_config none\' to request a soft warm reset");
 			retval = target_halt(target);
 			if (retval != ERROR_OK)
 				return retval;

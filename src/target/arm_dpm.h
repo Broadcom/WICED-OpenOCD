@@ -198,6 +198,48 @@ void arm_dpm_report_wfar(struct arm_dpm *, uint32_t wfar);
 #define DRCR_RESTART			(1 << 1)
 #define DRCR_CLEAR_EXCEPTIONS	(1 << 2)
 
+
+/* VCR (Vector Catch Register) bits */
+#define VCR_RESET						(1 << 0)
+#define VCR_UNDEFINED					(1 << 1)
+#define VCR_SUPERVISOR_CALL				(1 << 2)
+#define VCR_PREFETCH_ABORT				(1 << 3)
+#define VCR_DATA_ABORT					(1 << 4)
+#define VCR_IRQ							(1 << 6)
+#define VCR_FIQ							(1 << 7)
+#define VCR_MONITOR_SECURE_CALL			(1 << 10)
+#define VCR_MONITOR_PREFETCH_ABORT		(1 << 11)
+#define VCR_MONITOR_DATA_ABORT			(1 << 12)
+#define VCR_MONITOR_IRQ					(1 << 14)
+#define VCR_MONITOR_FIQ					(1 << 15)
+#define VCR_HYP_UNDEFINED				(1 << 17)
+#define VCR_HYPERVISOR_CALL				(1 << 18)
+#define VCR_HYPERVISOR_PREFETCH_ABORT	(1 << 19)
+#define VCR_HYPERVISOR_DATA_ABORT		(1 << 20)
+#define VCR_HYPERVISOR_TRAP_ENTRY		(1 << 21)
+#define VCR_HYPERVISOR_IRQ				(1 << 22)
+#define VCR_HYPERVISOR_FIQ				(1 << 23)
+#define VCR_NONSEC_UNDEFINED			(1 << 25)
+#define VCR_NONSEC_SUPERVISOR_CALL		(1 << 26)
+#define VCR_NONSEC_PREFETCH_ABORT		(1 << 27)
+#define VCR_NONSEC_DATA_ABORT			(1 << 28)
+#define VCR_NONSEC_IRQ					(1 << 30)
+#define VCR_NONSEC_FIQ					(1 << 31)
+
+/* PRCR (Device Power-down and Reset Control Register) bits */
+#define PRCR_DEBUG_NO_POWER_DOWN         (1 << 0)
+#define PRCR_WARM_RESET                  (1 << 1)
+#define PRCR_HOLD_NON_DEBUG_RESET        (1 << 2)
+
+/* PRSR (Device Power-down and Reset Status Register) bits */
+#define PRSR_POWERUP_STATUS              (1 << 0)
+#define PRSR_STICKY_POWERDOWN_STATUS     (1 << 1)
+#define PRSR_RESET_STATUS                (1 << 2)
+#define PRSR_STICKY_RESET_STATUS         (1 << 3)
+#define PRSR_HALTED                      (1 << 4)  /* v7.1 Debug only */
+#define PRSR_OSLK                        (1 << 5)  /* v7.1 Debug only */
+#define PRSR_DLK                         (1 << 6)  /* v7.1 Debug only */
+
 void arm_dpm_report_dscr(struct arm_dpm *dpm, uint32_t dcsr);
 
 #endif /* __ARM_DPM_H */
