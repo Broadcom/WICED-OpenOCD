@@ -32,11 +32,6 @@
 /* To achieve C99 printf compatibility in MinGW, gnu_printf should be
  * used for __attribute__((format( ... ))), with GCC v4.4 or later
  */
-#if (defined(IS_MINGW) && (((__GNUC__ << 16) + __GNUC_MINOR__) >= 0x00040004))
-#define PRINTF_ATTRIBUTE_FORMAT gnu_printf
-#else
-#define PRINTF_ATTRIBUTE_FORMAT printf
-#endif
 
 /* logging priorities
  * LOG_LVL_SILENT - turn off all output. In lieu of try + catch this can be used as a

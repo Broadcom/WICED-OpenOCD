@@ -1,9 +1,8 @@
 Building OpenOCD for Windows
 ----------------------------
 
-You can build OpenOCD for Windows natively with either MinGW-w64/MSYS
-or Cygwin (plain MinGW might work with --disable-werror but is not
-recommended as it doesn't provide enough C99 compatibility).
+You can build OpenOCD for Windows natively with either MinGW-w64/MSYS,
+Cygwin or MinGW.
 Alternatively, one can cross-compile it using MinGW-w64 on a *nix
 host. See README for the generic instructions.
 
