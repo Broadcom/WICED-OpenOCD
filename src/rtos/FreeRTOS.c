@@ -516,12 +516,19 @@ static int FreeRTOS_get_thread_ascii_info(struct rtos *rtos, threadid_t thread_i
 
 static int FreeRTOS_detect_rtos(struct target *target)
 {
-	if ((target->rtos->symbols != NULL) &&
-			(target->rtos->symbols[FreeRTOS_VAL_pxReadyTasksLists].address != 0)) {
-		/* looks like FreeRTOS */
-		return 1;
+	if (target->rtos->symbols == NULL) {
+		LOG_ERROR("Null Symbol list");
+		return 0;
 	}
-	return 0;
+
+	for (symbol_table_elem_t *s = target->rtos->symbols; s->symbol_name; ++s) {
+		if ((!s->optional) && (s->address == 0)) {
+			LOG_DEBUG("No address for mandatory FreeRTOS symbol %s - not detecting FreeRTOS", s->symbol_name);
+			return 0;
+		}
+	}
+	/* All mandatory symbols are available - looks like FreeRTOS */
+	return 1;
 }
 
 static int FreeRTOS_create(struct target *target)
