@@ -32,10 +32,10 @@
 #include "rtos_standard_stackings.h"
 
 static const struct rtos_register_stacking *get_stacking_info(const struct rtos *rtos, int64_t stack_ptr);
-static const struct rtos_register_stacking *get_stacking_info_arm926ejs(const struct rtos *rtos, int64_t stack_ptr);
+static const struct rtos_register_stacking *get_stacking_info_arm9_CR4(const struct rtos *rtos, int64_t stack_ptr);
 
 static int is_thread_id_valid(const struct rtos *rtos, int64_t thread_id);
-static int is_thread_id_valid_arm926ejs(const struct rtos *rtos, int64_t thread_id);
+static int is_thread_id_valid_arm9_CR4(const struct rtos *rtos, int64_t thread_id);
 
 static int ThreadX_detect_rtos(struct target *target);
 static int ThreadX_create(struct target *target);
@@ -70,8 +70,10 @@ static const struct ThreadX_thread_state ThreadX_thread_states[] = {
 
 #define THREADX_NUM_STATES (sizeof(ThreadX_thread_states)/sizeof(struct ThreadX_thread_state))
 
-#define ARM926EJS_REGISTERS_SIZE_SOLICITED (11 * 4)
-static const struct stack_register_offset rtos_threadx_arm926ejs_stack_offsets_solicited[] = {
+#define ARM9_CR4_REGISTERS_SIZE_SOLICITED (11 * 4)  /* Size in bytes of stack frame */
+
+/* Note - First word before xPSR is 0, indicating Thread frame */
+static const struct stack_register_offset rtos_threadx_arm9_CR4_stack_offsets_solicited[] = {
 	{ REGISTER_NOT_STACKED,      32 },		/* r0        */
 	{ REGISTER_NOT_STACKED,      32 },		/* r1        */
 	{ REGISTER_NOT_STACKED,      32 },		/* r2        */
@@ -88,12 +90,13 @@ static const struct stack_register_offset rtos_threadx_arm926ejs_stack_offsets_s
 	{ REGISTER_IS_STACK_POINTER, 32 },		/* sp (r13)  */
 	{ 0x28,                      32 },		/* lr (r14)  */
 	{ REGISTER_NOT_STACKED,      32 },		/* pc (r15)  */
-	/*{ REGISTER_NOT_STACKED,      32 },*/		/* lr (r14)  */
-	/*{ 0x28,                      32 },*/		/* pc (r15)  */
 	{ 0x04,                      32 },		/* xPSR      */
 };
-#define ARM926EJS_REGISTERS_SIZE_INTERRUPT (17 * 4)
-static const struct stack_register_offset rtos_threadx_arm926ejs_stack_offsets_interrupt[] = {
+
+#define ARM9_CR4_REGISTERS_SIZE_INTERRUPT (17 * 4)  /* Size in bytes of stack frame */
+
+/* Note - First word before xPSR is 1, indicating Interrupt frame */
+static const struct stack_register_offset rtos_threadx_arm9_CR4_stack_offsets_interrupt[] = {
 	{ 0x08,                      32 },		/* r0        */
 	{ 0x0C,                      32 },		/* r1        */
 	{ 0x10,                      32 },		/* r2        */
@@ -113,20 +116,20 @@ static const struct stack_register_offset rtos_threadx_arm926ejs_stack_offsets_i
 	{ 0x04,                      32 },		/* xPSR      */
 };
 
-const struct rtos_register_stacking rtos_threadx_arm926ejs_stacking[] = {
+const struct rtos_register_stacking rtos_threadx_arm9_CR4_stacking[] = {
 {
-	ARM926EJS_REGISTERS_SIZE_SOLICITED,	/* stack_registers_size */
+	ARM9_CR4_REGISTERS_SIZE_SOLICITED,	/* stack_registers_size */
 	-1,									/* stack_growth_direction */
 	17,									/* num_output_registers */
 	NULL,								/* stack_alignment */
-	rtos_threadx_arm926ejs_stack_offsets_solicited	/* register_offsets */
+	rtos_threadx_arm9_CR4_stack_offsets_solicited	/* register_offsets */
 },
 {
-	ARM926EJS_REGISTERS_SIZE_INTERRUPT,	/* stack_registers_size */
+	ARM9_CR4_REGISTERS_SIZE_INTERRUPT,	/* stack_registers_size */
 	-1,									/* stack_growth_direction */
 	17,									/* num_output_registers */
 	NULL,								/* stack_alignment */
-	rtos_threadx_arm926ejs_stack_offsets_interrupt	/* register_offsets */
+	rtos_threadx_arm9_CR4_stack_offsets_interrupt	/* register_offsets */
 },
 };
 
@@ -163,10 +166,10 @@ static const struct ThreadX_params ThreadX_params_list[] = {
 	40,							/* thread_name_offset; */
 	48,							/* thread_state_offset; */
 	136,						/* thread_next_offset */
-	&rtos_standard_Cortex_R4_stacking,	/* stacking_info */
-	1,							/* stacking_info_nb */
-	NULL,						/* fn_get_stacking_info */
-	NULL,						/* fn_is_thread_id_valid */
+	rtos_threadx_arm9_CR4_stacking,	/* stacking_info */
+	2,							/* stacking_info_nb */
+	get_stacking_info_arm9_CR4,		/* fn_get_stacking_info */
+	is_thread_id_valid_arm9_CR4,		/* fn_is_thread_id_valid */
 	},
 	{
 	"arm926ejs",				/* target_name */
@@ -175,10 +178,10 @@ static const struct ThreadX_params ThreadX_params_list[] = {
 	40,							/* thread_name_offset; */
 	48,							/* thread_state_offset; */
 	136,						/* thread_next_offset */
-	rtos_threadx_arm926ejs_stacking,	/* stacking_info */
+	rtos_threadx_arm9_CR4_stacking,	/* stacking_info */
 	2,									/* stacking_info_nb */
-	get_stacking_info_arm926ejs,		/* fn_get_stacking_info */
-	is_thread_id_valid_arm926ejs,		/* fn_is_thread_id_valid */
+	get_stacking_info_arm9_CR4,		/* fn_get_stacking_info */
+	is_thread_id_valid_arm9_CR4,		/* fn_is_thread_id_valid */
 	},
 };
 
@@ -260,7 +263,7 @@ static int is_thread_id_valid(const struct rtos *rtos, int64_t thread_id)
 	return (thread_id != 0);
 }
 
-static const struct rtos_register_stacking *get_stacking_info_arm926ejs(const struct rtos *rtos, int64_t stack_ptr)
+static const struct rtos_register_stacking *get_stacking_info_arm9_CR4(const struct rtos *rtos, int64_t stack_ptr)
 {
 	const struct ThreadX_params *param = (const struct ThreadX_params *) rtos->rtos_specific_params;
 	int	retval;
@@ -284,7 +287,7 @@ static const struct rtos_register_stacking *get_stacking_info_arm926ejs(const st
 	}
 }
 
-static int is_thread_id_valid_arm926ejs(const struct rtos *rtos, int64_t thread_id)
+static int is_thread_id_valid_arm9_CR4(const struct rtos *rtos, int64_t thread_id)
 {
 	return (thread_id != 0 && thread_id != 1);
 }

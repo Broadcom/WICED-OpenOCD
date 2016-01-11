@@ -45,34 +45,7 @@ static const struct stack_register_offset rtos_standard_Cortex_M3_stack_offsets[
 	{ 0x3c,                      32 },		/* xPSR */
 };
 
-static const struct stack_register_offset rtos_standard_Cortex_R4_stack_offsets[] = {
-	{ 0x08,                      32 },		/* r0  (a1)   */
-	{ 0x0c,                      32 },		/* r1  (a2)  */
-	{ 0x10,                      32 },		/* r2  (a3)  */
-	{ 0x14,                      32 },		/* r3  (a4)  */
-	{ 0x18,                      32 },		/* r4  (v1)  */
-	{ 0x1c,                      32 },		/* r5  (v2)  */
-	{ 0x20,                      32 },		/* r6  (v3)  */
-	{ 0x24,                      32 },		/* r7  (v4)  */
-	{ 0x28,                      32 },		/* r8  (a1)  */
-	{ 0x2c,                      32 },		/* r9  (sb)  */
-	{ 0x30,                      32 },		/* r10 (sl) */
-	{ 0x34,                      32 },		/* r11 (fp) */
-	{ 0x38,                      32 },		/* r12 (ip) */
-	{ REGISTER_IS_STACK_POINTER, 32 },		/* sp   */
-	{ 0x3c,                      32 },		/* lr   */
-	{ 0x40,                      32 },		/* pc   */
-	{ REGISTER_NOT_STACKED,      96 },		/* FPA1 */
-	{ REGISTER_NOT_STACKED,      96 },		/* FPA2 */
-	{ REGISTER_NOT_STACKED,      96 },		/* FPA3 */
-	{ REGISTER_NOT_STACKED,      96 },		/* FPA4 */
-	{ REGISTER_NOT_STACKED,      96 },		/* FPA5 */
-	{ REGISTER_NOT_STACKED,      96 },		/* FPA6 */
-	{ REGISTER_NOT_STACKED,      96 },		/* FPA7 */
-	{ REGISTER_NOT_STACKED,      96 },		/* FPA8 */
-	{ REGISTER_NOT_STACKED,      32 },		/* FPS  */
-	{ 0x04,                      32 },		/* CSPR */
-};
+
 
 static const struct stack_register_offset rtos_standard_NDS32_N1068_stack_offsets[] = {
 	{ 0x88,                      32 },		/* R0  */
@@ -198,13 +171,6 @@ const struct rtos_register_stacking rtos_standard_Cortex_M3_stacking = {
 	rtos_standard_Cortex_M3_stack_offsets	/* register_offsets */
 };
 
-const struct rtos_register_stacking rtos_standard_Cortex_R4_stacking = {
-	0x48,				/* stack_registers_size */
-	-1,					/* stack_growth_direction */
-	26,					/* num_output_registers */
-	rtos_generic_stack_align8,	/* stack_alignment */
-	rtos_standard_Cortex_R4_stack_offsets	/* register_offsets */
-};
 
 const struct rtos_register_stacking rtos_standard_NDS32_N1068_stacking = {
 	0x90,				/* stack_registers_size */
