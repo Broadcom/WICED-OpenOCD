@@ -2951,6 +2951,7 @@ static int cortex_a_handle_target_request(void *priv)
 				armv7a->debug_base + CPUDBG_DSCR, &dscr);
 
 		/* check if we have data */
+		long long then = timeval_ms();
 		while ((dscr & DSCR_DTR_TX_FULL) && (retval == ERROR_OK)) {
 			retval = mem_ap_read_atomic_u32(armv7a->debug_ap,
 					armv7a->debug_base + CPUDBG_DTRTX, &request);
@@ -2958,6 +2959,10 @@ static int cortex_a_handle_target_request(void *priv)
 				target_request(target, request);
 				retval = mem_ap_read_atomic_u32(armv7a->debug_ap,
 						armv7a->debug_base + CPUDBG_DSCR, &dscr);
+			}
+			if (timeval_ms() > then + 1000) {
+				LOG_ERROR("Timeout waiting for dtr tx full");
+				return ERROR_FAIL;
 			}
 		}
 	}
