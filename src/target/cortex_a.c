@@ -2236,6 +2236,7 @@ static int cortex_a_write_apb_ab_memory(struct target *target,
 	struct armv7a_common *armv7a = target_to_armv7a(target);
 	struct arm *arm = &armv7a->arm;
 	uint32_t dscr, orig_dfar, orig_dfsr, fault_dscr, fault_dfar, fault_dfsr;
+	uint32_t address_mod = address % 4;
 
 	LOG_DEBUG("Writing APB-AP memory address 0x%" PRIx32 " size %"  PRIu32 " count %"  PRIu32,
 			  address, size, count);
@@ -2246,6 +2247,16 @@ static int cortex_a_write_apb_ab_memory(struct target *target,
 
 	if (!count)
 		return ERROR_OK;
+
+	if ((size == 4) && (address_mod)) {
+		/* Read unaligned bytes at start - recurse with size=1 */
+		retval = cortex_a_write_apb_ab_memory(target, address, 1, 4 - address_mod, buffer);
+		if (retval != ERROR_OK)
+			return retval;
+		address += (4 - address_mod);
+		buffer  += (4 - address_mod);
+		count--;
+	}
 
 	/* Clear any abort. */
 	retval = mem_ap_write_atomic_u32(armv7a->debug_ap,
@@ -2281,9 +2292,12 @@ static int cortex_a_write_apb_ab_memory(struct target *target,
 	if (retval != ERROR_OK)
 		goto out;
 
-	if (size == 4 && (address % 4) == 0) {
-		/* We are doing a word-aligned transfer, so use fast mode. */
+	if (size == 4) {
+		/* We are doing a word-aligned transfer, so use fast mode. - unalignment has already been handled */
 		retval = cortex_a_write_apb_ab_memory_fast(target, count, buffer, &dscr);
+
+		address += (count<<2);
+		buffer  += (count<<2);
 	} else {
 		/* Use slow path. */
 		retval = cortex_a_write_apb_ab_memory_slow(target, size, count, buffer, &dscr);
@@ -2360,6 +2374,15 @@ out:
 		retval = cortex_a_exec_opcode(target, ARMV4_5_MRC(14, 0, 1, 0, 5, 0), &dscr);
 		if (final_retval == ERROR_OK)
 			final_retval = retval;
+	}
+
+	/* Read unaligned bytes at end - recurse with size=1 */
+	if ((size == 4) && (address_mod)) {
+		retval = cortex_a_write_apb_ab_memory(target, address, 1, address_mod, buffer);
+		if (final_retval == ERROR_OK)
+			final_retval = retval;
+
+		buffer  += address_mod;
 	}
 
 	/* Done. */
@@ -2538,6 +2561,7 @@ static int cortex_a_read_apb_ab_memory(struct target *target,
 	struct armv7a_common *armv7a = target_to_armv7a(target);
 	struct arm *arm = &armv7a->arm;
 	uint32_t dscr, orig_dfar, orig_dfsr, fault_dscr, fault_dfar, fault_dfsr;
+	uint32_t address_mod = address % 4;
 
 	LOG_DEBUG("Reading APB-AP memory address 0x%" PRIx32 " size %"  PRIu32 " count %"  PRIu32,
 			  address, size, count);
@@ -2548,6 +2572,16 @@ static int cortex_a_read_apb_ab_memory(struct target *target,
 
 	if (!count)
 		return ERROR_OK;
+
+	if ((size == 4) && (address_mod)) {
+		/* Read unaligned bytes at start - recurse with size=1 */
+			retval = cortex_a_read_apb_ab_memory(target, address, 1, 4 - address_mod, buffer);
+			if (retval != ERROR_OK)
+				return retval;
+			address += (4 - address_mod);
+			buffer  += (4 - address_mod);
+			count--;
+	}
 
 	/* Clear any abort. */
 	retval = mem_ap_write_atomic_u32(armv7a->debug_ap,
@@ -2583,9 +2617,12 @@ static int cortex_a_read_apb_ab_memory(struct target *target,
 	if (retval != ERROR_OK)
 		goto out;
 
-	if (size == 4 && (address % 4) == 0) {
-		/* We are doing a word-aligned transfer, so use fast mode. */
+	if (size == 4) {
+		/* We are doing a word-aligned transfer, so use fast mode. - unalignment has already been handled */
 		retval = cortex_a_read_apb_ab_memory_fast(target, count, buffer, &dscr);
+
+		address += (count << 2);
+		buffer  += (count << 2);
 	} else {
 		/* Use slow path. */
 		retval = cortex_a_read_apb_ab_memory_slow(target, size, count, buffer, &dscr);
@@ -2650,6 +2687,12 @@ out:
 		retval = cortex_a_exec_opcode(target, ARMV4_5_MRC(14, 0, 1, 0, 5, 0), &dscr);
 		if (final_retval == ERROR_OK)
 			final_retval = retval;
+	}
+
+	if ((size == 4) && (address_mod)) {
+		/* Read unaligned bytes at end - recurse with size=1 */
+		retval = cortex_a_read_apb_ab_memory(target, address, 1, address_mod, buffer);
+		buffer  += address_mod;
 	}
 
 	/* Done. */
