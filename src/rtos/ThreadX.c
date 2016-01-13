@@ -89,7 +89,7 @@ static const struct stack_register_offset rtos_threadx_arm9_CR4_stack_offsets_so
 	{ REGISTER_NOT_STACKED,      32 },		/* r12       */
 	{ REGISTER_IS_STACK_POINTER, 32 },		/* sp (r13)  */
 	{ 0x28,                      32 },		/* lr (r14)  */
-	{ REGISTER_NOT_STACKED,      32 },		/* pc (r15)  */
+	{ 0x28,                      32 },		/* pc (r15)  - Copy LR to PC so that debugger does not show blank stack frame */
 	{ 0x04,                      32 },		/* xPSR      */
 };
 
